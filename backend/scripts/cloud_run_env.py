@@ -48,7 +48,16 @@ def main() -> int:
     OUT.parent.mkdir(parents=True, exist_ok=True)
     # JSON strings are valid YAML scalars, and json.dumps escapes everything safely.
     OUT.write_text("".join(f"{k}: {json.dumps(v)}\n" for k, v in env.items()), encoding="utf-8")
-    print(f"[OK]   Wrote {OUT} ({len(env)} variables; keys not printed).")
+    # Same values unescaped, for pasting into the Cloud Run console one variable at a time.
+    plain = OUT.with_name("cloud-run.env.console.txt")
+    plain.write_text(
+        "# Cloud Run console > Edit & deploy > Variables & Secrets. One variable per row:\n"
+        "# Name = text before the first '=', Value = everything after it (no quotes).\n\n"
+        + "".join(f"{k}={v}\n" for k, v in env.items()),
+        encoding="utf-8",
+    )
+    print(f"[OK]   Wrote {OUT} for gcloud ({len(env)} variables; keys not printed).")
+    print(f"[OK]   Wrote {plain} for the Cloud Run console.")
     print(f"       CORS origins: {env['CORS_ORIGINS']}")
     return 0
 
