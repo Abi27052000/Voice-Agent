@@ -56,8 +56,11 @@ export function useVapiCall(publicKey, personas = {}) {
     vapi.on('speech-end', () => setAssistantSpeaking(false))
     vapi.on('volume-level', setVolume)
     vapi.on('error', (err) => {
-      setError(describeError(err))
+      const text = describeError(err)
       setStatus('idle')
+      // The audio layer reports a normal hang-up by the assistant as "Meeting has ended".
+      if (/meeting (has )?ended/i.test(text)) return
+      setError(text)
     })
     vapi.on('message', (msg) => {
       // A squad handoff (or the first assistant joining) announces the new speaker.

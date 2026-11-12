@@ -48,8 +48,10 @@ function KpiRow({ stats }) {
 }
 
 function NeedsAttention({ calls, leads, onOpenCall }) {
-  const followUps = calls.filter((c) => c.follow_up_needed)
   const emergencies = leads.filter((l) => l.status === 'emergency')
+  // An emergency lead already covers the call that created it; don't list it twice.
+  const emergencyLeadIds = new Set(emergencies.map((l) => l.id))
+  const followUps = calls.filter((c) => c.follow_up_needed && !emergencyLeadIds.has(c.lead_id))
   if (!followUps.length && !emergencies.length) return null
   return (
     <section className="card">

@@ -9,11 +9,11 @@ import time
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import exists, select
 from sqlalchemy.orm import Session
 
 from app.agents import call_outcome
-from app.db.models import Call, Lead
+from app.db.models import Appointment, Call, Lead
 from app.db.session import SessionLocal
 from app.services.pricing import estimate_job_value
 from app.services.vapi_client import VapiClient, VapiConfigError, VapiError
@@ -47,15 +47,28 @@ def extract_outcome(artifact: dict[str, Any] | None) -> dict[str, Any] | None:
 
 
 def _apply_outcome(call: Call, result: dict[str, Any]) -> None:
+    # `booked` is NOT taken from the LLM; see _sync_booked().
     call.outcome = result
-    call.booked = result.get("booked")
     call.urgency = result.get("urgency")
     call.job_type = result.get("job_type")
     call.caller_sentiment = result.get("caller_sentiment")
     call.follow_up_needed = result.get("follow_up_needed")
     call.follow_up_reason = result.get("follow_up_reason") or None
-    call.estimated_value_usd = estimate_job_value(call.job_type) if call.booked else 0
     call.outcome_status = "ready"
+
+
+def _sync_booked(session: Session, call: Call) -> None:
+    """A call counts as booked only if an appointment was created during it.
+
+    The CRM is the source of truth. In testing, the LLM extraction marked an
+    emergency callback as "booked", which inflated booking rate and revenue.
+    """
+    call.booked = bool(
+        session.scalar(select(exists().where(Appointment.call_id == call.id)))
+    )
+    call.estimated_value_usd = (
+        estimate_job_value(call.job_type) if call.booked and call.outcome_status == "ready" else 0
+    )
 
 
 def upsert_call(session: Session, data: dict[str, Any]) -> Call:
@@ -85,6 +98,7 @@ def upsert_call(session: Session, data: dict[str, Any]) -> Call:
     result = extract_outcome(artifact)
     if result:
         _apply_outcome(call, result)
+    _sync_booked(session, call)
 
     session.commit()
     return call

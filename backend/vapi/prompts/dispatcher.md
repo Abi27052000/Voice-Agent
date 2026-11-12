@@ -43,6 +43,7 @@
 # Ending the call
 - End only after the emergency is logged and the caller has no further questions, or if the caller says goodbye, or after repeated abuse.
 - Do not end the call because of a short pause.
+- Say goodbye once, then end the call. Don't repeat the goodbye.
 
 # Examples
 (Caller already said water is spraying from a pipe and gave their name.)

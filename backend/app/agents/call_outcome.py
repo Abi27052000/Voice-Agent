@@ -29,7 +29,8 @@ SCHEMA: dict[str, Any] = {
     "properties": {
         "booked": {
             "type": "boolean",
-            "description": "True only if a service window was booked and a reference number was given.",
+            "description": "True only if a routine service window was booked and a reference number "
+            "was read out. False for emergencies logged for an on-call callback.",
         },
         "urgency": {
             "type": "string",

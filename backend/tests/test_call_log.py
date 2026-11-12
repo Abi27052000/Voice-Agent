@@ -64,6 +64,14 @@ def test_report_saves_call_with_outcome_and_links_lead(client, refreshes):
     assert refreshes == []
 
 
+def test_booked_comes_from_crm_not_llm(client, refreshes):
+    # Regression: the LLM said booked=True for an emergency callback with no appointment.
+    post(client, report(outcome={**OUTCOME, "booked": True, "urgency": "emergency"}))
+    call = get_call()
+    assert call.booked is False and call.estimated_value_usd == 0
+    assert call.outcome["booked"] is True  # raw extraction kept for reference
+
+
 def test_report_without_outcome_schedules_refresh(client, refreshes):
     post(client, report(outcome=None))
     assert get_call().outcome_status == "pending"
