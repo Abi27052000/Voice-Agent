@@ -1,7 +1,7 @@
 [project]
-name = "backend"
+name = "ridgeway-ai-front-desk"
 version = "0.1.0"
-description = "Add your description here"
+description = "Vapi voice agents, webhook tools, and CRM API for an AI front desk demo"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi[standard]>=0.162.5",

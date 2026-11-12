@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import { apiGet } from './lib/api'
 import Dashboard from './pages/Dashboard'
 import FrontDesk from './pages/FrontDesk'
+import Home from './pages/Home'
 import QuoteRequest from './pages/QuoteRequest'
 import WinBack from './pages/WinBack'
 
 const VIEWS = {
-  '#/': 'Front desk',
+  '#/': 'Home',
+  '#/front-desk': 'Front desk',
   '#/quote': 'Get a quote',
   '#/win-back': 'Win-back',
   '#/dashboard': 'Dashboard',
@@ -36,13 +38,13 @@ export default function App() {
   return (
     <div className="page">
       <header className="site-header">
-        <div className="brand">
+        <a className="brand" href="#/">
           <span className="logo" aria-hidden="true">R</span>
           <div>
             <strong>Ridgeway Plumbing &amp; Air</strong>
             <span className="muted small">AI front-desk demo</span>
           </div>
-        </div>
+        </a>
         <nav className="nav" aria-label="Main">
           {Object.entries(VIEWS).map(([hash, label]) => (
             <a key={hash} href={hash} className={`nav-link ${view === hash ? 'nav-active' : ''}`}
@@ -55,7 +57,8 @@ export default function App() {
 
       <main>
         {/* Call pages stay mounted (just hidden) so switching tabs never hangs up a live call. */}
-        <div hidden={view !== '#/'}>
+        {view === '#/' && <Home />}
+        <div hidden={view !== '#/front-desk'}>
           <FrontDesk config={config} configError={configError} />
         </div>
         <div hidden={view !== '#/quote'}>
