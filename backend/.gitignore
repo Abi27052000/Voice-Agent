@@ -8,3 +8,12 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Local secrets and environment
+.env
+.env.*
+!.env.example
+
+# Local data (SQLite DB) and account-specific Vapi resource IDs
+data/
+vapi/ids.json
