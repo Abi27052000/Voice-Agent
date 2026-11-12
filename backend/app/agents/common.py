@@ -1,7 +1,7 @@
 """Shared building blocks for every assistant in the demo.
 
-Budget guardrails live here: a small fast model, short replies, and a hard
-call-length cap so a forgotten browser tab can't drain Vapi credit.
+Budget guardrails live here: a small fast model, short replies, and a silence
+timeout so a forgotten browser tab can't drain Vapi credit.
 """
 
 from typing import Any
@@ -11,7 +11,9 @@ from app.services.vapi_ids import VAPI_DIR
 PROMPTS_DIR = VAPI_DIR / "prompts"
 PROJECT_TAG = "ridgeway-demo"
 
-MAX_CALL_SECONDS = 180
+# Vapi's own default. Set explicitly because an omitted field is not reset on
+# update (PATCH keeps the previous value).
+MAX_CALL_SECONDS = 600
 SILENCE_TIMEOUT_SECONDS = 20
 
 

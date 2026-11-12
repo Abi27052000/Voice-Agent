@@ -23,6 +23,15 @@ class Settings(BaseSettings):
 
     database_url: str = "sqlite:///./data/app.db"
 
+    # The fictional business's local time zone (used for scheduling windows).
+    business_timezone: str = "America/New_York"
+
+    @property
+    def webhook_url(self) -> str | None:
+        if not self.public_base_url:
+            return None
+        return f"{self.public_base_url.rstrip('/')}{self.api_prefix}/vapi/webhook"
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

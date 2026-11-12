@@ -8,7 +8,7 @@ const STATUS_LABEL = {
   ending: 'Ending…',
 }
 
-export default function CallWidget({ publicKey, assistantId, agentName, maxMinutes = 3 }) {
+export default function CallWidget({ publicKey, assistantId, agentName, maxMinutes = 10 }) {
   const call = useVapiCall(publicKey)
   const transcriptRef = useRef(null)
   const inCall = call.status !== 'idle'

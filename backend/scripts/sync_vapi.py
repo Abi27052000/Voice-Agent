@@ -13,18 +13,36 @@ Syncing does not use Vapi credit; only calls do.
 import argparse
 import sys
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any
 
-from app.agents import receptionist
+from app.agents import credential, receptionist, tools
 from app.core.config import get_settings
 from app.services.vapi_client import VapiClient, VapiConfigError, VapiError
 from app.services.vapi_ids import load_ids, save_ids
 
-# (Vapi resource kind, local key, display name, payload builder). Order matters
-# once resources reference each other (tools before assistants before squads).
-Resource = tuple[str, str, str, Callable[[], dict[str, Any]]]
+Ids = dict[str, dict[str, str]]
+
+
+@dataclass(frozen=True)
+class Resource:
+    kind: str  # Vapi API path segment: credential | tool | assistant
+    key: str  # local key in ids.json
+    name: str  # unique name used to find it in Vapi
+    build: Callable[[Ids], dict[str, Any]]
+
+
+def remote_name(kind: str, item: dict[str, Any]) -> str | None:
+    if kind == "tool":
+        return (item.get("function") or {}).get("name")
+    return item.get("name")
+
+
+# Order matters: each resource may reference IDs of the ones before it.
 RESOURCES: list[Resource] = [
-    ("assistant", receptionist.KEY, receptionist.NAME, receptionist.build),
+    Resource("credential", credential.KEY, credential.NAME, credential.build),
+    *[Resource("tool", key, key, build) for key, build in tools.TOOLS],
+    Resource("assistant", receptionist.KEY, receptionist.NAME, receptionist.build),
 ]
 
 
@@ -51,16 +69,18 @@ def check() -> int:
     for name, (value, why) in optional.items():
         status = "[OK]  " if value else "[TODO]"
         print(f"{status} {name} {'is set' if value else 'is not set'} - {why}")
+    if settings.webhook_url:
+        print(f"       Tools will call: {settings.webhook_url}")
     return 0
 
 
-def find_existing(vapi: VapiClient, kind: str, saved_id: str | None, name: str) -> str | None:
-    remote = vapi.list(kind, limit=1000)
+def find_existing(vapi: VapiClient, res: Resource, saved_id: str | None) -> str | None:
+    remote = vapi.list(res.kind, limit=1000)
     if saved_id and any(r["id"] == saved_id for r in remote):
         return saved_id
-    matches = [r["id"] for r in remote if r.get("name") == name]
+    matches = [r["id"] for r in remote if remote_name(res.kind, r) == res.name]
     if len(matches) > 1:
-        raise SystemExit(f"[FAIL] {len(matches)} {kind}s are named '{name}'. Delete extras first.")
+        raise SystemExit(f"[FAIL] {len(matches)} {res.kind}s are named '{res.name}'. Delete extras.")
     return matches[0] if matches else None
 
 
@@ -68,19 +88,21 @@ def sync(dry_run: bool) -> int:
     ids = load_ids()
     try:
         with VapiClient() as vapi:
-            for kind, key, name, build in RESOURCES:
-                payload = build()
-                existing_id = find_existing(vapi, kind, ids.get(kind, {}).get(key), name)
+            for res in RESOURCES:
+                existing_id = find_existing(vapi, res, ids.get(res.kind, {}).get(res.key))
                 action = "update" if existing_id else "create"
                 if dry_run:
-                    print(f"[DRY]  would {action} {kind} '{name}'")
+                    print(f"[DRY]  would {action} {res.kind} '{res.name}'")
+                    if existing_id:  # later builders may need this ID
+                        ids.setdefault(res.kind, {})[res.key] = existing_id
                     continue
+                payload = res.build(ids)
                 if existing_id:
-                    result = vapi.patch(f"/{kind}/{existing_id}", payload)
+                    result = vapi.patch(f"/{res.kind}/{existing_id}", payload)
                 else:
-                    result = vapi.post(f"/{kind}", payload)
-                ids.setdefault(kind, {})[key] = result["id"]
-                print(f"[OK]   {action}d {kind} '{name}' -> {result['id']}")
+                    result = vapi.post(f"/{res.kind}", payload)
+                ids.setdefault(res.kind, {})[res.key] = result["id"]
+                print(f"[OK]   {action}d {res.kind} '{res.name}' -> {result['id']}")
     except (VapiConfigError, VapiError) as exc:
         print(f"[FAIL] {exc}")
         return 1

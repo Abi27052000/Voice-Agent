@@ -7,4 +7,11 @@ dependencies = [
     "fastapi[standard]>=0.162.5",
     "httpx>=0.28.1",
     "pydantic-settings>=2.16.2",
+    "sqlalchemy>=2.0",
+    "tzdata>=2026.6",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
 ]
