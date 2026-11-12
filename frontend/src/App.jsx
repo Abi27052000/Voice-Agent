@@ -1,17 +1,24 @@
 import { useEffect, useState } from 'react'
-import CallWidget from './components/CallWidget'
 import { apiGet } from './lib/api'
+import Dashboard from './pages/Dashboard'
+import FrontDesk from './pages/FrontDesk'
 
-const TRY_SAYING = [
-  'My kitchen sink is draining really slowly.',
-  "Water is spraying from under my sink!",
-  'How much does a water heater replacement cost?',
-  'Can someone come out Saturday morning for an AC tune-up?',
-]
+const VIEWS = { '#/': 'Front desk', '#/dashboard': 'Dashboard' }
+
+function currentView() {
+  return VIEWS[window.location.hash] ? window.location.hash : '#/'
+}
 
 export default function App() {
+  const [view, setView] = useState(currentView)
   const [config, setConfig] = useState(null)
   const [configError, setConfigError] = useState(null)
+
+  useEffect(() => {
+    const onHash = () => setView(currentView())
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
 
   useEffect(() => {
     apiGet('/vapi/config')
@@ -29,39 +36,22 @@ export default function App() {
             <span className="muted small">AI front-desk demo</span>
           </div>
         </div>
+        <nav className="nav" aria-label="Main">
+          {Object.entries(VIEWS).map(([hash, label]) => (
+            <a key={hash} href={hash} className={`nav-link ${view === hash ? 'nav-active' : ''}`}
+               aria-current={view === hash ? 'page' : undefined}>
+              {label}
+            </a>
+          ))}
+        </nav>
       </header>
 
-      <main className="layout">
-        <div>
-          {configError ? (
-            <section className="card">
-              <h2>Backend not reachable</h2>
-              <p className="error">{configError}</p>
-              <p className="muted">
-                Start it with <code>uv run fastapi dev app/main.py</code> in <code>backend/</code>.
-              </p>
-            </section>
-          ) : (
-            <CallWidget
-              publicKey={config?.public_key}
-              assistantId={config?.assistants?.receptionist}
-              agentName="Alex"
-            />
-          )}
+      <main>
+        {/* Front desk stays mounted (just hidden) so switching tabs never hangs up a live call. */}
+        <div hidden={view !== '#/'}>
+          <FrontDesk config={config} configError={configError} />
         </div>
-
-        <aside className="card">
-          <h2>Try saying</h2>
-          <ul className="suggestions">
-            {TRY_SAYING.map((s) => (
-              <li key={s}>“{s}”</li>
-            ))}
-          </ul>
-          <p className="muted small">
-            Alex answers like a real receptionist: triages emergencies, collects your details, and logs a
-            service request.
-          </p>
-        </aside>
+        {view === '#/dashboard' && <Dashboard />}
       </main>
 
       <footer className="muted small">Ridgeway Plumbing &amp; Air is a fictional business for demo purposes.</footer>

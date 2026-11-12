@@ -264,3 +264,325 @@ code {
 footer {
   text-align: center;
 }
+
+/* ---------- Navigation ---------- */
+
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.nav-link {
+  padding: 6px 14px;
+  border-radius: 999px;
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.nav-active {
+  background: var(--primary);
+  color: var(--primary-text);
+}
+
+/* ---------- Status tokens (reserved for state; always paired with icon + label) ---------- */
+
+/* Checked with the dataviz palette validator: normal-vision separation and
+   >=3:1 contrast pass on both surfaces. Red/amber stay close for deutan/protan
+   viewers, which is why every badge also carries an icon and a text label. */
+:root {
+  --good: #1a7f37;
+  --warning: #946200;
+  --critical: #c4314b;
+  --info: #0969da;
+  --neutral: #5d6573;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --good: #46b85a;
+    --warning: #d4a02a;
+    --critical: #ec6a8a;
+    --info: #5a9ef0;
+    --neutral: #9aa3b2;
+  }
+}
+
+.badge-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--tone, var(--neutral)) 45%, transparent);
+  background: color-mix(in srgb, var(--tone, var(--neutral)) 12%, transparent);
+}
+
+.badge-icon {
+  color: var(--tone, var(--neutral));
+  font-size: 0.7rem;
+}
+
+.badge-good { --tone: var(--good); }
+.badge-warning { --tone: var(--warning); }
+.badge-critical { --tone: var(--critical); }
+.badge-info { --tone: var(--info); }
+.badge-neutral { --tone: var(--neutral); }
+
+/* ---------- Dashboard ---------- */
+
+.dashboard {
+  display: grid;
+  gap: 20px;
+}
+
+.dashboard-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-sm {
+  padding: 6px 14px;
+  font-size: 0.85rem;
+}
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.stat-tile {
+  display: grid;
+  gap: 2px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.stat-detail {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.attention-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.attention-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--primary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin: -4px 0 12px;
+  overflow-x: auto;
+}
+
+.tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 12px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tab-active {
+  color: var(--text);
+  border-bottom-color: var(--primary);
+}
+
+.tab-count {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+th {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+tr.clickable {
+  cursor: pointer;
+}
+
+tr.clickable:hover td {
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+}
+
+tr.past td {
+  color: var(--muted);
+}
+
+.block {
+  display: block;
+}
+
+.empty {
+  padding: 24px 0;
+  text-align: center;
+}
+
+/* ---------- Call detail drawer ---------- */
+
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 0.45);
+  display: flex;
+  justify-content: flex-end;
+  z-index: 10;
+}
+
+.drawer {
+  width: min(560px, 100%);
+  height: 100%;
+  overflow-y: auto;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  padding: 20px 16px 32px;
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.drawer h3 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+}
+
+.drawer section p {
+  margin: 0;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.facts dt {
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+.callout {
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.callout-warning {
+  border: 1px solid color-mix(in srgb, var(--warning) 45%, transparent);
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+}
+
+.transcript-static {
+  min-height: 0;
+  max-height: none;
+}
