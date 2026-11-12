@@ -1,18 +1,31 @@
-"""Create or update this project's Vapi resources from the configs in backend/vapi/.
+"""Create or update this project's Vapi resources from the definitions in app/agents/.
 
 Usage (from the backend/ folder):
-    uv run python -m scripts.sync_vapi --check   # verify the API key and local config
-    uv run python -m scripts.sync_vapi           # sync assistants/tools/squads (added in later steps)
+    uv run python -m scripts.sync_vapi --check     # verify the API key and local config
+    uv run python -m scripts.sync_vapi --dry-run   # show what would be created/updated
+    uv run python -m scripts.sync_vapi             # create/update resources in Vapi
 
-Sync is idempotent: resources are matched by name, so running it twice
-updates instead of creating duplicates. IDs are written to vapi/ids.json.
+Sync is idempotent: a resource is matched by its saved ID (vapi/ids.json), then
+by name, so running it twice updates instead of creating duplicates.
+Syncing does not use Vapi credit; only calls do.
 """
 
 import argparse
 import sys
+from collections.abc import Callable
+from typing import Any
 
+from app.agents import receptionist
 from app.core.config import get_settings
 from app.services.vapi_client import VapiClient, VapiConfigError, VapiError
+from app.services.vapi_ids import load_ids, save_ids
+
+# (Vapi resource kind, local key, display name, payload builder). Order matters
+# once resources reference each other (tools before assistants before squads).
+Resource = tuple[str, str, str, Callable[[], dict[str, Any]]]
+RESOURCES: list[Resource] = [
+    ("assistant", receptionist.KEY, receptionist.NAME, receptionist.build),
+]
 
 
 def check() -> int:
@@ -41,16 +54,49 @@ def check() -> int:
     return 0
 
 
-def sync() -> int:
-    print("Nothing to sync yet. Assistants are added in Step 2.")
+def find_existing(vapi: VapiClient, kind: str, saved_id: str | None, name: str) -> str | None:
+    remote = vapi.list(kind, limit=1000)
+    if saved_id and any(r["id"] == saved_id for r in remote):
+        return saved_id
+    matches = [r["id"] for r in remote if r.get("name") == name]
+    if len(matches) > 1:
+        raise SystemExit(f"[FAIL] {len(matches)} {kind}s are named '{name}'. Delete extras first.")
+    return matches[0] if matches else None
+
+
+def sync(dry_run: bool) -> int:
+    ids = load_ids()
+    try:
+        with VapiClient() as vapi:
+            for kind, key, name, build in RESOURCES:
+                payload = build()
+                existing_id = find_existing(vapi, kind, ids.get(kind, {}).get(key), name)
+                action = "update" if existing_id else "create"
+                if dry_run:
+                    print(f"[DRY]  would {action} {kind} '{name}'")
+                    continue
+                if existing_id:
+                    result = vapi.patch(f"/{kind}/{existing_id}", payload)
+                else:
+                    result = vapi.post(f"/{kind}", payload)
+                ids.setdefault(kind, {})[key] = result["id"]
+                print(f"[OK]   {action}d {kind} '{name}' -> {result['id']}")
+    except (VapiConfigError, VapiError) as exc:
+        print(f"[FAIL] {exc}")
+        return 1
+    finally:
+        if not dry_run:
+            save_ids(ids)  # keep IDs of anything created before a failure
     return 0
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--check", action="store_true", help="verify API key and config only")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--check", action="store_true", help="verify API key and config only")
+    group.add_argument("--dry-run", action="store_true", help="show changes without applying")
     args = parser.parse_args()
-    return check() if args.check else sync()
+    return check() if args.check else sync(args.dry_run)
 
 
 if __name__ == "__main__":
