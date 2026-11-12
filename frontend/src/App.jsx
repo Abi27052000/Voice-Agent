@@ -55,6 +55,12 @@ export default function App() {
         </nav>
       </header>
 
+      {config?.public_demo && (
+        <p className="demo-banner" role="note">
+          Public demo with fictional data that resets automatically. Please don't enter real personal details.
+        </p>
+      )}
+
       <main>
         {/* Call pages stay mounted (just hidden) so switching tabs never hangs up a live call. */}
         {view === '#/' && <Home />}

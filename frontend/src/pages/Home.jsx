@@ -36,7 +36,7 @@ const FEATURES = [
 const TRUST = [
   {
     title: 'Tested like software',
-    body: 'Vapi Simulations play realistic callers (stressed, skeptical, cooperative) against the real agents: 8 scenarios, 21 checks, all passing. Plus 57 backend tests.',
+    body: 'Vapi Simulations play realistic callers (stressed, skeptical, cooperative) against the real agents: 8 scenarios, 21 checks, all passing. Plus 62 backend tests.',
   },
   {
     title: 'Safe by design',

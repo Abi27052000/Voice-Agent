@@ -31,4 +31,5 @@ def get_public_config() -> VapiPublicConfig:
         assistants=assistants,
         squads=ids.get("squad", {}),
         personas=PERSONAS,
+        public_demo=settings.public_demo,
     )

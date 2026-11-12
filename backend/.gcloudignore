@@ -1,0 +1,13 @@
+# Files NOT uploaded by `gcloud run deploy --source backend`.
+# Same rules as .dockerignore: never upload secrets or local data.
+.gcloudignore
+.env
+.env.*
+.venv/
+data/
+vapi/ids.json
+tests/
+simulations/
+scripts/
+**/__pycache__/
+*.py[oc]

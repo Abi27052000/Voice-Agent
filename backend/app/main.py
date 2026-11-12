@@ -6,7 +6,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
-from app.db.session import init_db
+from app.db.session import SessionLocal, init_db
+from app.services.demo_seed import seed_demo_data
 from app.routers import api_router
 
 settings = get_settings()
@@ -16,6 +17,11 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(messag
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     init_db()
+    if settings.seed_demo_data:
+        # Hosted demo: the container's SQLite file is ephemeral, so each fresh
+        # instance starts with the same clean, fictional demo data.
+        with SessionLocal() as session:
+            seed_demo_data(session)
     yield
 
 

@@ -4,12 +4,12 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.controllers import reactivation_controller
-from app.core.security import require_direct_request
+from app.core.security import require_dashboard_access
 from app.db.session import get_session
 from app.schemas.reactivation import WinBackCallOut, WinBackOverview
 
 router = APIRouter(prefix="/win-back", tags=["win-back"],
-                   dependencies=[Depends(require_direct_request)])
+                   dependencies=[Depends(require_dashboard_access)])
 
 SessionDep = Annotated[Session, Depends(get_session)]
 

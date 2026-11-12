@@ -4,11 +4,11 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.controllers import crm_controller
-from app.core.security import require_direct_request
+from app.core.security import require_dashboard_access
 from app.db.session import get_session
 from app.schemas.crm import AppointmentOut, CallDetail, CallOut, LeadOut, Stats
 
-router = APIRouter(tags=["crm"], dependencies=[Depends(require_direct_request)])
+router = APIRouter(tags=["crm"], dependencies=[Depends(require_dashboard_access)])
 
 SessionDep = Annotated[Session, Depends(get_session)]
 

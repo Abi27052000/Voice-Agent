@@ -1,6 +1,7 @@
-"""Local store for the IDs of Vapi resources created by scripts/sync_vapi.py.
+"""IDs of the Vapi resources created by scripts/sync_vapi.py.
 
-The file (backend/vapi/ids.json) is account-specific, so it's gitignored.
+Locally they live in backend/vapi/ids.json (account-specific, gitignored).
+In a container the file isn't present, so VAPI_IDS_JSON provides the same JSON.
 Shape: {"assistant": {"receptionist": "<id>"}, "tool": {...}, ...}
 """
 
@@ -12,6 +13,11 @@ IDS_FILE = VAPI_DIR / "ids.json"
 
 
 def load_ids() -> dict[str, dict[str, str]]:
+    from app.core.config import get_settings  # local import: config must not depend on this module
+
+    override = get_settings().vapi_ids_json
+    if override:
+        return json.loads(override)
     if not IDS_FILE.exists():
         return {}
     return json.loads(IDS_FILE.read_text(encoding="utf-8"))

@@ -9,3 +9,5 @@ class VapiPublicConfig(BaseModel):
     squads: dict[str, str] = {}
     # Vapi assistant name -> persona name, so the UI can label who is speaking.
     personas: dict[str, str] = {}
+    # Hosted public demo: the UI shows a "fictional data, resets" notice.
+    public_demo: bool = False

@@ -26,6 +26,17 @@ class Settings(BaseSettings):
     # The fictional business's local time zone (used for scheduling windows).
     business_timezone: str = "America/New_York"
 
+    # --- Hosted demo (Cloud Run) ---
+    # Public demo: dashboard/CRM APIs are intentionally open (fictional data that
+    # resets), and the UI shows a "don't enter real info" banner. Off locally,
+    # where those APIs are blocked for requests arriving through a tunnel.
+    public_demo: bool = False
+    # Seed demo bookings and win-back leads at startup when the database is empty.
+    seed_demo_data: bool = False
+    # Vapi resource IDs as JSON (same shape as vapi/ids.json, which is gitignored
+    # and therefore not in the container).
+    vapi_ids_json: str | None = None
+
     @property
     def webhook_url(self) -> str | None:
         if not self.public_base_url:

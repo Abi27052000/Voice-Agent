@@ -55,7 +55,7 @@ Other safeguards:
 
 ## Testing
 
-- **57 backend tests** (`uv run pytest`): auth, every tool, validation errors, duplicate deliveries, full time windows, call logging, KPI math, the tunnel guard, the trust boundary, and phone formatting.
+- **62 backend tests** (`uv run pytest`): auth, every tool, validation errors, duplicate deliveries, full time windows, call logging, KPI math, the tunnel guard, the trust boundary, and phone formatting.
 - **8 Vapi Simulations** in 2 suites. An AI tester plays realistic callers (cooperative, stressed, skeptical) against the real agents, with every tool mocked. **8/8 passed, 21/21 checks.** See [`backend/simulations/RESULTS.md`](backend/simulations/RESULTS.md).
   - Covered: booking, filled-window recovery (never falsely confirms), burst-pipe handoff, gas evacuation before questions, no invented prices, honest AI disclosure, opt-out honored, win-back booking.
   - Limits: these are chat runs with one iteration. Voice runs and repeated runs are the next step before production.
@@ -122,12 +122,16 @@ frontend/src/
   hooks/           useVapiCall (Vapi Web SDK), usePolling
 ```
 
+## Deploy the demo (free tier)
+
+The backend runs on **Google Cloud Run** (scales to zero, re-seeds fictional demo data on each fresh start) and the frontend on **Firebase Hosting**. Step-by-step guide: [`docs/DEPLOY.md`](docs/DEPLOY.md). `PUBLIC_DEMO=true` opens the dashboard deliberately and shows visitors a "fictional data" notice, while the Vapi webhook always requires its secret.
+
 ## Production checklist
 
 This is a demo. Taking it to a real client would add:
 
 - **Phone numbers:** a Twilio or Vapi number for inbound calls, plus an outbound-capable number for follow-up and Campaigns (free Vapi numbers can't run campaigns), and SMS for reactivation.
-- **Hosting:** deploy the API with a stable HTTPS URL, move SQLite to Postgres, and **put real authentication on the dashboard**. The current guard only blocks tunneled requests.
+- **Hosting for a real client:** move SQLite to Postgres and **put real authentication on the dashboard**. The hosted demo is deliberately public with fictional data.
 - **Lock down the Vapi public key** to the site's domain in Vapi → API Keys → Origins. Anyone with the key can start calls on your credit.
 - **Integrations:** connect the client's real calendar and CRM (Google Calendar, Jobber, ServiceTitan, GoHighLevel) in place of SQLite scheduling.
 - **Confidence:** voice-mode simulations, repeated runs of the critical scenarios, and a human review of call recordings.

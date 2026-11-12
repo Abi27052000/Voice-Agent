@@ -4,14 +4,13 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.controllers.quote_controller import create_quote_request
-from app.core.security import require_direct_request
+from app.core.security import require_dashboard_access
 from app.db.session import get_session
 from app.schemas.quote import SERVICES, QuoteRequestIn, QuoteRequestOut
 
-# Local-only like the CRM: the demo site runs on this machine, and only Vapi's
-# webhook needs to be reachable through the tunnel.
+# Same access rule as the CRM: open in the hosted public demo, local-only in development.
 router = APIRouter(prefix="/quote-requests", tags=["quote"],
-                   dependencies=[Depends(require_direct_request)])
+                   dependencies=[Depends(require_dashboard_access)])
 
 
 @router.get("/services")
