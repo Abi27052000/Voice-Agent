@@ -5,11 +5,12 @@ import json
 import logging
 from typing import Any
 
-from fastapi import HTTPException, status
+from fastapi import BackgroundTasks, HTTPException, status
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.services.call_log import record_end_of_call_report, refresh_outcome
 from app.services.tool_handlers import TOOL_HANDLERS, ToolContext, ToolError
 
 log = logging.getLogger(__name__)
@@ -81,7 +82,9 @@ def run_tool_call(session: Session, tool_call: dict[str, Any], call_id: str | No
     return result
 
 
-def handle_server_message(session: Session, body: dict[str, Any]) -> dict[str, Any]:
+def handle_server_message(
+    session: Session, body: dict[str, Any], background: BackgroundTasks
+) -> dict[str, Any]:
     message = body.get("message") or {}
     message_type = message.get("type")
     call_id = (message.get("call") or {}).get("id")
@@ -90,6 +93,14 @@ def handle_server_message(session: Session, body: dict[str, Any]) -> dict[str, A
         tool_calls = message.get("toolCallList") or []
         return {"results": [run_tool_call(session, tc, call_id) for tc in tool_calls]}
 
-    # Other events (status-update, end-of-call-report, ...) are acknowledged.
-    # end-of-call-report handling is added in Step 4.
+    if message_type == "end-of-call-report" and call_id:
+        call = record_end_of_call_report(session, message)
+        log.info("Saved call %s (ended: %s, outcome: %s)", call.id, call.ended_reason,
+                 call.outcome_status)
+        if call.outcome_status != "ready":
+            # Structured Outputs can finish after the report is sent; poll for it.
+            background.add_task(refresh_outcome, call.id)
+        return {}
+
+    # Other events are acknowledged and ignored.
     return {}

@@ -6,6 +6,7 @@ timeout so a forgotten browser tab can't drain Vapi credit.
 
 from typing import Any
 
+from app.core.config import get_settings
 from app.services.vapi_ids import VAPI_DIR
 
 PROMPTS_DIR = VAPI_DIR / "prompts"
@@ -37,6 +38,29 @@ VOICE: dict[str, Any] = {"provider": "vapi", "voiceId": "Elliot", "version": 2}
 TRANSCRIBER: dict[str, Any] = {"provider": "deepgram", "model": "nova-3", "language": "en"}
 
 
+def webhook_url() -> str:
+    url = get_settings().webhook_url
+    if not url:
+        raise SystemExit("[FAIL] PUBLIC_BASE_URL is not set in backend/.env (needed for webhooks).")
+    return url
+
+
+def server(ids: dict[str, dict[str, str]]) -> dict[str, Any]:
+    """Send this assistant's call events to our webhook (bearer-authenticated).
+
+    Only the events we handle are subscribed, to keep webhook traffic low.
+    Tool calls still go to each tool's own server URL.
+    """
+    return {
+        "server": {
+            "url": webhook_url(),
+            "credentialId": ids["credential"]["webhook"],
+            "timeoutSeconds": 10,
+        },
+        "serverMessages": ["end-of-call-report", "tool-calls"],
+    }
+
+
 def base_assistant(role: str) -> dict[str, Any]:
     """Fields every assistant shares; callers add name, firstMessage and model."""
     return {
@@ -44,5 +68,6 @@ def base_assistant(role: str) -> dict[str, Any]:
         "transcriber": TRANSCRIBER,
         "maxDurationSeconds": MAX_CALL_SECONDS,
         "silenceTimeoutSeconds": SILENCE_TIMEOUT_SECONDS,
+        "analysisPlan": {"summaryPlan": {"enabled": True}},
         "metadata": {"project": PROJECT_TAG, "role": role},
     }

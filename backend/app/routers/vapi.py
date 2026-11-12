@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Depends, Header
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, Header
 from sqlalchemy.orm import Session
 
 from app.controllers.vapi_controller import get_public_config
@@ -24,5 +24,6 @@ def require_vapi_auth(authorization: Annotated[str | None, Header()] = None) -> 
 def vapi_webhook(
     body: Annotated[dict[str, Any], Body()],
     session: Annotated[Session, Depends(get_session)],
+    background: BackgroundTasks,
 ) -> dict[str, Any]:
-    return handle_server_message(session, body)
+    return handle_server_message(session, body, background)

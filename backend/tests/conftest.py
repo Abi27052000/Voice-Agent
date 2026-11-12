@@ -7,6 +7,7 @@ _tmp_dir = tempfile.mkdtemp(prefix="voice-agent-tests-")
 os.environ["DATABASE_URL"] = f"sqlite:///{_tmp_dir}/test.db"
 os.environ["VAPI_WEBHOOK_SECRET"] = "test-secret"
 os.environ["PUBLIC_BASE_URL"] = "https://example.test"
+os.environ["VAPI_API_KEY"] = ""  # tests must never call the real Vapi API
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

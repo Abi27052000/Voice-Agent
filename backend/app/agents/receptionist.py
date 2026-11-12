@@ -1,7 +1,7 @@
 from typing import Any
 
-from app.agents import tools
-from app.agents.common import base_assistant, load_prompt, model
+from app.agents import call_outcome, tools
+from app.agents.common import base_assistant, load_prompt, model, server
 
 KEY = "receptionist"
 NAME = "Ridgeway Receptionist"
@@ -19,8 +19,10 @@ def build(ids: dict[str, dict[str, str]]) -> dict[str, Any]:
     llm["toolIds"] = [ids["tool"][key] for key in TOOL_KEYS]
     return {
         **base_assistant(KEY),
+        **server(ids),
         "name": NAME,
         "firstMessageMode": "assistant-speaks-first",
         "firstMessage": FIRST_MESSAGE,
         "model": llm,
+        "artifactPlan": {"structuredOutputIds": [ids["structured-output"][call_outcome.KEY]]},
     }

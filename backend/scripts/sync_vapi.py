@@ -16,7 +16,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from app.agents import credential, receptionist, tools
+from app.agents import call_outcome, credential, receptionist, tools
 from app.core.config import get_settings
 from app.services.vapi_client import VapiClient, VapiConfigError, VapiError
 from app.services.vapi_ids import load_ids, save_ids
@@ -26,7 +26,7 @@ Ids = dict[str, dict[str, str]]
 
 @dataclass(frozen=True)
 class Resource:
-    kind: str  # Vapi API path segment: credential | tool | assistant
+    kind: str  # Vapi API path segment: credential | tool | structured-output | assistant
     key: str  # local key in ids.json
     name: str  # unique name used to find it in Vapi
     build: Callable[[Ids], dict[str, Any]]
@@ -42,6 +42,7 @@ def remote_name(kind: str, item: dict[str, Any]) -> str | None:
 RESOURCES: list[Resource] = [
     Resource("credential", credential.KEY, credential.NAME, credential.build),
     *[Resource("tool", key, key, build) for key, build in tools.TOOLS],
+    Resource("structured-output", call_outcome.KEY, call_outcome.NAME, call_outcome.build),
     Resource("assistant", receptionist.KEY, receptionist.NAME, receptionist.build),
 ]
 

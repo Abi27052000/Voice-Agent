@@ -4,7 +4,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from app.core.config import get_settings
+from app.agents.common import webhook_url
 from app.schemas.tools import BookAppointmentArgs, CheckAvailabilityArgs, CreateLeadArgs
 
 CHECK_AVAILABILITY = "check_availability"
@@ -36,9 +36,6 @@ def function_parameters(model: type[BaseModel]) -> dict[str, Any]:
 def _function_tool(
     name: str, description: str, args: type[BaseModel], start_message: str | None, credential_id: str
 ) -> dict[str, Any]:
-    webhook_url = get_settings().webhook_url
-    if not webhook_url:
-        raise SystemExit("[FAIL] PUBLIC_BASE_URL is not set in backend/.env (needed for tools).")
     tool: dict[str, Any] = {
         "type": "function",
         "function": {
@@ -46,7 +43,7 @@ def _function_tool(
             "description": description,
             "parameters": function_parameters(args),
         },
-        "server": {"url": webhook_url, "credentialId": credential_id, "timeoutSeconds": 10},
+        "server": {"url": webhook_url(), "credentialId": credential_id, "timeoutSeconds": 10},
         "messages": [
             {
                 "type": "request-failed",

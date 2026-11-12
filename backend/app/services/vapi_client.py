@@ -64,6 +64,11 @@ class VapiClient:
     def delete(self, path: str) -> Any:
         return self.request("DELETE", path)
 
-    def list(self, resource: str, limit: int = 100) -> list[dict[str, Any]]:
-        """List resources such as "assistant", "tool" or "squad"."""
-        return self.get(f"/{resource}", limit=limit)
+    def list(self, resource: str, limit: int = 100, **params: Any) -> list[dict[str, Any]]:
+        """List resources such as "assistant", "tool" or "structured-output".
+
+        Most endpoints return a plain array; some (structured-output) return
+        {"results": [...], "metadata": {...}}.
+        """
+        data = self.get(f"/{resource}", limit=limit, **params)
+        return data["results"] if isinstance(data, dict) else data
