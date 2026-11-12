@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { apiGet } from './lib/api'
 import Dashboard from './pages/Dashboard'
 import FrontDesk from './pages/FrontDesk'
+import QuoteRequest from './pages/QuoteRequest'
 
-const VIEWS = { '#/': 'Front desk', '#/dashboard': 'Dashboard' }
+const VIEWS = { '#/': 'Front desk', '#/quote': 'Get a quote', '#/dashboard': 'Dashboard' }
 
 function currentView() {
   return VIEWS[window.location.hash] ? window.location.hash : '#/'
@@ -47,9 +48,12 @@ export default function App() {
       </header>
 
       <main>
-        {/* Front desk stays mounted (just hidden) so switching tabs never hangs up a live call. */}
+        {/* Call pages stay mounted (just hidden) so switching tabs never hangs up a live call. */}
         <div hidden={view !== '#/'}>
           <FrontDesk config={config} configError={configError} />
+        </div>
+        <div hidden={view !== '#/quote'}>
+          <QuoteRequest config={config} />
         </div>
         {view === '#/dashboard' && <Dashboard />}
       </main>

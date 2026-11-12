@@ -16,7 +16,16 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from app.agents import call_outcome, credential, dispatcher, handoff, receptionist, squad, tools
+from app.agents import (
+    call_outcome,
+    credential,
+    dispatcher,
+    follow_up,
+    handoff,
+    receptionist,
+    squad,
+    tools,
+)
 from app.core.config import get_settings
 from app.services.vapi_client import VapiClient, VapiConfigError, VapiError
 from app.services.vapi_ids import load_ids, save_ids
@@ -48,6 +57,7 @@ RESOURCES: list[Resource] = [
     Resource("tool", handoff.TO_DISPATCHER, handoff.TO_DISPATCHER, handoff.build_to_dispatcher),
     Resource("assistant", receptionist.KEY, receptionist.NAME, receptionist.build),
     Resource("squad", squad.KEY, squad.NAME, squad.build),
+    Resource("assistant", follow_up.KEY, follow_up.NAME, follow_up.build),
 ]
 
 

@@ -15,7 +15,7 @@ class ToolArgs(BaseModel):
     model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
 
 
-def _digits_only(value: str) -> str:
+def normalize_phone(value: str) -> str:
     digits = re.sub(r"\D", "", value)
     if not 7 <= len(digits) <= 15:
         raise ValueError("phone must contain 7 to 15 digits")
@@ -37,7 +37,7 @@ class CallerDetails(ToolArgs):
     phone: str = Field(description="Callback phone number, digits as spoken by the caller.")
     issue: str = Field(min_length=3, max_length=1000, description="Short description of the problem.")
 
-    _normalize_phone = field_validator("phone")(_digits_only)
+    _normalize_phone = field_validator("phone")(normalize_phone)
 
 
 class BookAppointmentArgs(CallerDetails):

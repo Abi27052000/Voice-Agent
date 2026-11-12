@@ -1,11 +1,15 @@
 from fastapi import HTTPException, status
 
-from app.agents import dispatcher, receptionist
+from app.agents import dispatcher, follow_up, receptionist
 from app.core.config import get_settings
 from app.schemas.vapi import VapiPublicConfig
 from app.services.vapi_ids import load_ids
 
-PERSONAS = {receptionist.NAME: receptionist.PERSONA, dispatcher.NAME: dispatcher.PERSONA}
+PERSONAS = {
+    receptionist.NAME: receptionist.PERSONA,
+    dispatcher.NAME: dispatcher.PERSONA,
+    follow_up.NAME: follow_up.PERSONA,
+}
 
 
 def get_public_config() -> VapiPublicConfig:

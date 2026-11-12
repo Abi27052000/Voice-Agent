@@ -67,6 +67,23 @@ def get_call(session: Session, call_id: str) -> CallDetail:
     return CallDetail(**_call_fields(call), transcript=call.transcript, outcome=call.outcome)
 
 
+def _speed_to_lead(session: Session) -> tuple[float | None, int]:
+    """Average seconds from web-form submission to the first call for that lead."""
+    first_call = (
+        select(Call.lead_id, func.min(Call.started_at).label("first_call"))
+        .where(Call.lead_id.is_not(None), Call.started_at.is_not(None))
+        .group_by(Call.lead_id)
+        .subquery()
+    )
+    rows = session.execute(
+        select(Lead.created_at, first_call.c.first_call)
+        .join(first_call, first_call.c.lead_id == Lead.id)
+        .where(Lead.source == "web_form")
+    ).all()
+    gaps = [(called - created).total_seconds() for created, called in rows if called >= created]
+    return (round(sum(gaps) / len(gaps), 1) if gaps else None), len(gaps)
+
+
 def get_stats(session: Session) -> Stats:
     def scalar(stmt) -> float:
         return session.scalar(stmt) or 0
@@ -77,6 +94,7 @@ def get_stats(session: Session) -> Stats:
     total_cost = float(scalar(select(func.sum(Call.cost_usd))))
     costed = int(scalar(select(func.count(Call.id)).where(Call.cost_usd.is_not(None))))
     avg_duration = session.scalar(select(func.avg(Call.duration_seconds)))
+    speed_to_lead, web_leads_called = _speed_to_lead(session)
 
     return Stats(
         calls_total=calls_total,
@@ -95,4 +113,6 @@ def get_stats(session: Session) -> Stats:
             )
         )),
         leads_total=int(scalar(select(func.count(Lead.id)))),
+        speed_to_lead_seconds=speed_to_lead,
+        web_leads_called=web_leads_called,
     )

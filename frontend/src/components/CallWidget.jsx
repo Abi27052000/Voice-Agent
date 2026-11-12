@@ -9,20 +9,10 @@ const STATUS_LABEL = {
 }
 
 /**
- * Starts a browser call with a squad (preferred) or a single assistant.
- * `agentName` is who answers first; `personas` maps Vapi assistant names to
- * persona names so squad handoffs are labelled in the transcript.
+ * Presentational call panel for a `useVapiCall()` result. Pages that start calls
+ * programmatically (e.g. after a form submit) own the hook and render this.
  */
-export default function CallWidget({
-  publicKey,
-  assistantId,
-  squadId,
-  personas,
-  agentName,
-  subtitle,
-  maxMinutes = 10,
-}) {
-  const call = useVapiCall(publicKey, personas)
+export function CallView({ call, agentName, title, subtitle, maxMinutes = 10, onStart, canStart = true, startLabel = 'Start call' }) {
   const transcriptRef = useRef(null)
   const inCall = call.status !== 'idle'
   const speakingAgent = call.agent || agentName
@@ -32,14 +22,11 @@ export default function CallWidget({
     if (el) el.scrollTop = el.scrollHeight
   }, [call.transcript])
 
-  const startCall = () =>
-    call.start(squadId ? { squadId, initialAgent: agentName } : { assistantId, initialAgent: agentName })
-
   return (
-    <section className="card call-widget" aria-label={`Call ${agentName}`}>
+    <section className="card call-widget" aria-label={title ?? `Call ${agentName}`}>
       <div className="call-header">
         <div>
-          <h2>Talk to {agentName}</h2>
+          <h2>{title ?? `Talk to ${agentName}`}</h2>
           <p className="muted">
             {subtitle ?? 'Browser call · uses your microphone'} · ends after {maxMinutes} min
           </p>
@@ -56,9 +43,11 @@ export default function CallWidget({
             End call
           </button>
         ) : (
-          <button className="btn btn-primary" onClick={startCall} disabled={!call.ready || !(squadId || assistantId)}>
-            Start call
-          </button>
+          onStart && (
+            <button className="btn btn-primary" onClick={onStart} disabled={!call.ready || !canStart}>
+              {startLabel}
+            </button>
+          )
         )}
         <button
           className="btn btn-ghost"
@@ -102,5 +91,19 @@ export default function CallWidget({
         )}
       </div>
     </section>
+  )
+}
+
+/**
+ * Self-contained call panel: starts a call with a squad (preferred) or a single
+ * assistant when the user clicks Start. `personas` maps Vapi assistant names to
+ * persona names so squad handoffs are labelled in the transcript.
+ */
+export default function CallWidget({ publicKey, assistantId, squadId, personas, agentName, ...viewProps }) {
+  const call = useVapiCall(publicKey, personas)
+  const startCall = () =>
+    call.start(squadId ? { squadId, initialAgent: agentName } : { assistantId, initialAgent: agentName })
+  return (
+    <CallView call={call} agentName={agentName} onStart={startCall} canStart={Boolean(squadId || assistantId)} {...viewProps} />
   )
 }

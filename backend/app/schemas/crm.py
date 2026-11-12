@@ -69,3 +69,6 @@ class Stats(BaseModel):
     emergencies: int
     upcoming_appointments: int
     leads_total: int
+    # Web-form leads: average seconds from form submission to the follow-up call starting.
+    speed_to_lead_seconds: float | None
+    web_leads_called: int

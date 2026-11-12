@@ -39,6 +39,11 @@ function KpiRow({ stats }) {
       />
       <StatTile label="Upcoming visits" value={stats.upcoming_appointments} detail={`${stats.leads_total} leads in CRM`} />
       <StatTile
+        label="Speed to lead"
+        value={stats.speed_to_lead_seconds == null ? '—' : `${stats.speed_to_lead_seconds}s`}
+        detail={`avg over ${stats.web_leads_called} web lead${stats.web_leads_called === 1 ? '' : 's'}`}
+      />
+      <StatTile
         label="AI cost per call"
         value={cents(stats.avg_cost_per_call_usd)}
         detail={`${cents(stats.total_cost_usd)} total`}

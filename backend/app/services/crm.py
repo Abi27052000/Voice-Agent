@@ -23,6 +23,8 @@ def upsert_lead(
     if lead is None:
         lead = Lead(phone=phone, source=source, name=name)
         session.add(lead)
+    elif source == "web_form":
+        lead.source = source  # a new web request re-opens the lead as a web lead
     lead.name = name
     lead.issue = issue or lead.issue
     lead.address = address or lead.address

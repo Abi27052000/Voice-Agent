@@ -71,6 +71,22 @@ def _sync_booked(session: Session, call: Call) -> None:
     )
 
 
+def _find_lead_id(session: Session, call_id: str, data: dict[str, Any]) -> int | None:
+    """The lead a tool touched during this call, else the lead the call was started for."""
+    lead_id = session.scalars(
+        select(Lead.id).where(Lead.call_id == call_id).order_by(Lead.id.desc())
+    ).first()
+    if lead_id:
+        return lead_id
+    # Outbound follow-ups pass the CRM lead ID as a call variable.
+    variables = ((data.get("assistantOverrides") or {}).get("variableValues")
+                 or (data.get("artifact") or {}).get("variableValues") or {})
+    raw = str(variables.get("leadId", ""))
+    if raw.isdigit() and session.get(Lead, int(raw)):
+        return int(raw)
+    return None
+
+
 def upsert_call(session: Session, data: dict[str, Any]) -> Call:
     """Insert or update a call from a Vapi call object. Commits."""
     call = session.get(Call, data["id"]) or Call(id=data["id"])
@@ -90,10 +106,14 @@ def upsert_call(session: Session, data: dict[str, Any]) -> Call:
     call.transcript = artifact.get("transcript") or call.transcript
     call.recording_url = artifact.get("recordingUrl") or call.recording_url
 
-    if call.lead_id is None:  # link to the lead a tool created during this call
-        call.lead_id = session.scalars(
-            select(Lead.id).where(Lead.call_id == call.id).order_by(Lead.id.desc())
-        ).first()
+    if call.lead_id is None:
+        call.lead_id = _find_lead_id(session, call.id, data)
+
+    lead = session.get(Lead, call.lead_id) if call.lead_id else None
+    # A web-form lead we called back is "contacted" (booking/emergency set their own status).
+    # Inbound callback requests stay "new": nobody has called them back yet.
+    if lead and lead.source == "web_form" and lead.status == "new" and call.ended_reason:
+        lead.status = "contacted"
 
     result = extract_outcome(artifact)
     if result:

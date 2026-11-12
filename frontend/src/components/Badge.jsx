@@ -36,7 +36,7 @@ export function CallOutcomeBadges({ call, now }) {
   )
 }
 
-const LEAD_TONES = { booked: 'good', emergency: 'critical', new: 'info' }
+const LEAD_TONES = { booked: 'good', emergency: 'critical', new: 'info', contacted: 'neutral' }
 
 export function LeadStatusBadge({ status }) {
   const label = status.charAt(0).toUpperCase() + status.slice(1)

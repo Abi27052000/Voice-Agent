@@ -30,6 +30,7 @@ export function useVapiCall(publicKey, personas = {}) {
   const agentRef = useRef(null)
   const [agent, setAgent] = useState(null)
   const [status, setStatus] = useState('idle')
+  const [startedAt, setStartedAt] = useState(null) // ms timestamp of the last call-start
   const [transcript, setTranscript] = useState([])
   const [assistantSpeaking, setAssistantSpeaking] = useState(false)
   const [volume, setVolume] = useState(0)
@@ -45,7 +46,10 @@ export function useVapiCall(publicKey, personas = {}) {
     const vapi = new Vapi(publicKey)
     vapiRef.current = vapi
 
-    vapi.on('call-start', () => setStatus('active'))
+    vapi.on('call-start', () => {
+      setStatus('active')
+      setStartedAt(Date.now())
+    })
     vapi.on('call-end', () => {
       setStatus('idle')
       setAssistantSpeaking(false)
@@ -108,6 +112,7 @@ export function useVapiCall(publicKey, personas = {}) {
     if (!vapi || !(assistantId || squadId)) return
     setError(null)
     setTranscript([])
+    setStartedAt(null)
     agentRef.current = initialAgent ?? null
     setAgent(initialAgent ?? null)
     setStatus('connecting')
@@ -139,6 +144,7 @@ export function useVapiCall(publicKey, personas = {}) {
 
   return {
     status,
+    startedAt,
     agent,
     transcript,
     assistantSpeaking,
