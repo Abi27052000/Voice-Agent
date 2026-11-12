@@ -20,16 +20,25 @@ function describeError(err) {
 /**
  * Wraps the Vapi Web SDK for one browser call at a time.
  * status: 'idle' | 'connecting' | 'active' | 'ending'
- * transcript: [{ role: 'assistant' | 'user', text, partial }]  (one entry per speaker turn)
+ * transcript: one entry per speaker turn:
+ *   { role: 'assistant' | 'user', speaker, text, partial } or { role: 'event', text }
+ * personas maps Vapi assistant names to persona names (e.g. "Ridgeway Receptionist" -> "Alex").
  */
-export function useVapiCall(publicKey) {
+export function useVapiCall(publicKey, personas = {}) {
   const vapiRef = useRef(null)
+  const personasRef = useRef(personas)
+  const agentRef = useRef(null)
+  const [agent, setAgent] = useState(null)
   const [status, setStatus] = useState('idle')
   const [transcript, setTranscript] = useState([])
   const [assistantSpeaking, setAssistantSpeaking] = useState(false)
   const [volume, setVolume] = useState(0)
   const [muted, setMuted] = useState(false)
   const [error, setError] = useState(null)
+
+  useEffect(() => {
+    personasRef.current = personas
+  }, [personas])
 
   useEffect(() => {
     if (!publicKey) return undefined
@@ -51,21 +60,35 @@ export function useVapiCall(publicKey) {
       setStatus('idle')
     })
     vapi.on('message', (msg) => {
+      // A squad handoff (or the first assistant joining) announces the new speaker.
+      if (msg?.type === 'assistant.started') {
+        const vapiName = msg.newAssistant?.name
+        const name = personasRef.current[vapiName] || vapiName || 'Assistant'
+        const isHandoff = agentRef.current && agentRef.current !== name
+        agentRef.current = name
+        setAgent(name)
+        if (isHandoff) {
+          setTranscript((prev) => [...prev, { role: 'event', text: `${name} joined the call` }])
+        }
+        return
+      }
+
       if (msg?.type !== 'transcript' || !msg.transcript) return
       const final = msg.transcriptType === 'final'
       const chunk = msg.transcript.trim()
+      const speaker = msg.role === 'assistant' ? agentRef.current : null
       setTranscript((prev) => {
         const last = prev[prev.length - 1]
         // Vapi sends one sentence at a time, as partials then a final. Merge a
         // speaker's consecutive sentences into one bubble; `partial` holds the
         // sentence still being recognized.
-        if (last && last.role === msg.role) {
+        if (last && last.role === msg.role && last.speaker === speaker) {
           const updated = final
             ? { ...last, text: [last.text, chunk].filter(Boolean).join(' '), partial: '' }
             : { ...last, partial: chunk }
           return [...prev.slice(0, -1), updated]
         }
-        return [...prev, { role: msg.role, text: final ? chunk : '', partial: final ? '' : chunk }]
+        return [...prev, { role: msg.role, speaker, text: final ? chunk : '', partial: final ? '' : chunk }]
       })
     })
 
@@ -76,14 +99,19 @@ export function useVapiCall(publicKey) {
     }
   }, [publicKey])
 
-  const start = useCallback(async (assistantId, overrides) => {
+  /** target: { assistantId } or { squadId }, plus optional assistant overrides. */
+  const start = useCallback(async ({ assistantId, squadId, overrides, initialAgent } = {}) => {
     const vapi = vapiRef.current
-    if (!vapi || !assistantId) return
+    if (!vapi || !(assistantId || squadId)) return
     setError(null)
     setTranscript([])
+    agentRef.current = initialAgent ?? null
+    setAgent(initialAgent ?? null)
     setStatus('connecting')
     try {
-      const call = await vapi.start(assistantId, overrides)
+      const call = squadId
+        ? await vapi.start(undefined, overrides, squadId)
+        : await vapi.start(assistantId, overrides)
       if (!call) setStatus('idle') // start failed; the 'error' event carries the reason
     } catch (err) {
       setError(describeError(err))
@@ -108,6 +136,7 @@ export function useVapiCall(publicKey) {
 
   return {
     status,
+    agent,
     transcript,
     assistantSpeaking,
     volume,

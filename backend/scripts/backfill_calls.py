@@ -18,7 +18,7 @@ from app.agents import call_outcome, receptionist
 from app.db.session import SessionLocal, init_db
 from app.services.call_log import upsert_call
 from app.services.vapi_client import VapiClient, VapiConfigError, VapiError
-from app.services.vapi_ids import get_id
+from app.services.vapi_ids import get_id, load_ids
 
 MAX_RUN_BATCH = 100  # Vapi's documented max call IDs per run request
 
@@ -29,16 +29,21 @@ def main() -> int:
     parser.add_argument("--extract", action="store_true", help="run Call Outcome on missing calls")
     args = parser.parse_args()
 
-    assistant_id = get_id("assistant", receptionist.KEY)
-    if not assistant_id:
+    ids = load_ids()
+    if not get_id("assistant", receptionist.KEY):
         print("[FAIL] No receptionist in vapi/ids.json. Run scripts.sync_vapi first.")
         return 1
+    our_assistants = set(ids.get("assistant", {}).values())
+    our_squads = set(ids.get("squad", {}).values())
+
+    def is_ours(call: dict) -> bool:
+        return call.get("assistantId") in our_assistants or call.get("squadId") in our_squads
 
     init_db()
     try:
         with VapiClient() as vapi:
-            calls = vapi.list("call", limit=args.limit, assistantId=assistant_id)
-            calls = [c for c in calls if c.get("status") == "ended"]
+            calls = vapi.list("call", limit=args.limit)
+            calls = [c for c in calls if c.get("status") == "ended" and is_ours(c)]
             with SessionLocal() as session:
                 saved = [upsert_call(session, c) for c in calls]
                 pending = [c.id for c in saved if c.outcome_status != "ready"]

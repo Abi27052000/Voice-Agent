@@ -3,7 +3,8 @@ import { apiGet } from '../lib/api'
 import { cents, dateTime, duration, humanize, money } from '../lib/format'
 import { CallOutcomeBadges } from './Badge'
 
-const SPEAKERS = { AI: 'Alex', User: 'Caller', Bot: 'Alex', Assistant: 'Alex' }
+// Vapi's saved transcript doesn't say which squad member spoke, so stay neutral.
+const SPEAKERS = { AI: 'Ridgeway AI', User: 'Caller', Bot: 'Ridgeway AI', Assistant: 'Ridgeway AI' }
 
 // Vapi transcripts look like "AI: ...\nUser: ...".
 function parseTranscript(text) {

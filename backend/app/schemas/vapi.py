@@ -6,3 +6,6 @@ class VapiPublicConfig(BaseModel):
 
     public_key: str
     assistants: dict[str, str]
+    squads: dict[str, str] = {}
+    # Vapi assistant name -> persona name, so the UI can label who is speaking.
+    personas: dict[str, str] = {}

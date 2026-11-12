@@ -586,3 +586,21 @@ tr.past td {
   min-height: 0;
   max-height: none;
 }
+
+/* Squad handoff marker in the live transcript */
+.line-event {
+  margin: 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.line-event::before,
+.line-event::after {
+  content: '';
+  flex: 1;
+  border-top: 1px dashed var(--border);
+}

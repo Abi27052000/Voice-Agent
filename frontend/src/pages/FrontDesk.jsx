@@ -22,8 +22,11 @@ export default function FrontDesk({ config, configError }) {
         ) : (
           <CallWidget
             publicKey={config?.public_key}
+            squadId={config?.squads?.front_desk}
             assistantId={config?.assistants?.receptionist}
+            personas={config?.personas}
             agentName="Alex"
+            subtitle="Browser call · emergencies go to Jordan, our dispatcher"
           />
         )}
       </div>
@@ -36,8 +39,9 @@ export default function FrontDesk({ config, configError }) {
           ))}
         </ul>
         <p className="muted small">
-          Alex triages emergencies, checks the live schedule, and books a real arrival window. Every call
-          then shows up on the dashboard with a summary and outcome.
+          Alex checks the live schedule and books a real arrival window. Emergencies are handed to Jordan, the
+          emergency dispatcher, who keeps the caller safe and alerts the on-call tech. Every call then shows up
+          on the dashboard with a summary and outcome.
         </p>
       </aside>
     </div>

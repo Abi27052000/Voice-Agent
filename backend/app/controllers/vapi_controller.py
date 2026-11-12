@@ -1,8 +1,11 @@
 from fastapi import HTTPException, status
 
+from app.agents import dispatcher, receptionist
 from app.core.config import get_settings
 from app.schemas.vapi import VapiPublicConfig
 from app.services.vapi_ids import load_ids
+
+PERSONAS = {receptionist.NAME: receptionist.PERSONA, dispatcher.NAME: dispatcher.PERSONA}
 
 
 def get_public_config() -> VapiPublicConfig:
@@ -11,10 +14,16 @@ def get_public_config() -> VapiPublicConfig:
         raise HTTPException(
             status.HTTP_503_SERVICE_UNAVAILABLE, "VAPI_PUBLIC_KEY is not set on the server."
         )
-    assistants = load_ids().get("assistant", {})
+    ids = load_ids()
+    assistants = ids.get("assistant", {})
     if not assistants:
         raise HTTPException(
             status.HTTP_503_SERVICE_UNAVAILABLE,
             "No assistants synced yet. Run: uv run python -m scripts.sync_vapi",
         )
-    return VapiPublicConfig(public_key=settings.vapi_public_key, assistants=assistants)
+    return VapiPublicConfig(
+        public_key=settings.vapi_public_key,
+        assistants=assistants,
+        squads=ids.get("squad", {}),
+        personas=PERSONAS,
+    )

@@ -61,6 +61,16 @@ def server(ids: dict[str, dict[str, str]]) -> dict[str, Any]:
     }
 
 
+# Every client message type Vapi offers. Listed explicitly (instead of relying on
+# defaults) so `assistant.started` reaches the browser and the UI can show handoffs.
+CLIENT_MESSAGES = [
+    "conversation-update", "assistant.speechStarted", "function-call", "function-call-result",
+    "hang", "language-changed", "metadata", "model-output", "speech-update", "status-update",
+    "transcript", "tool-calls", "tool-calls-result", "tool.completed", "transfer-update",
+    "user-interrupted", "voice-input", "workflow.node.started", "assistant.started",
+]
+
+
 def base_assistant(role: str) -> dict[str, Any]:
     """Fields every assistant shares; callers add name, firstMessage and model."""
     return {
@@ -69,5 +79,6 @@ def base_assistant(role: str) -> dict[str, Any]:
         "maxDurationSeconds": MAX_CALL_SECONDS,
         "silenceTimeoutSeconds": SILENCE_TIMEOUT_SECONDS,
         "analysisPlan": {"summaryPlan": {"enabled": True}},
+        "clientMessages": CLIENT_MESSAGES,
         "metadata": {"project": PROJECT_TAG, "role": role},
     }

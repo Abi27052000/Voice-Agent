@@ -16,7 +16,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from app.agents import call_outcome, credential, receptionist, tools
+from app.agents import call_outcome, credential, dispatcher, handoff, receptionist, squad, tools
 from app.core.config import get_settings
 from app.services.vapi_client import VapiClient, VapiConfigError, VapiError
 from app.services.vapi_ids import load_ids, save_ids
@@ -26,7 +26,7 @@ Ids = dict[str, dict[str, str]]
 
 @dataclass(frozen=True)
 class Resource:
-    kind: str  # Vapi API path segment: credential | tool | structured-output | assistant
+    kind: str  # Vapi API path: credential | tool | structured-output | assistant | squad
     key: str  # local key in ids.json
     name: str  # unique name used to find it in Vapi
     build: Callable[[Ids], dict[str, Any]]
@@ -43,7 +43,11 @@ RESOURCES: list[Resource] = [
     Resource("credential", credential.KEY, credential.NAME, credential.build),
     *[Resource("tool", key, key, build) for key, build in tools.TOOLS],
     Resource("structured-output", call_outcome.KEY, call_outcome.NAME, call_outcome.build),
+    Resource("assistant", dispatcher.KEY, dispatcher.NAME, dispatcher.build),
+    # The handoff tool points at the dispatcher, and the receptionist uses the handoff tool.
+    Resource("tool", handoff.TO_DISPATCHER, handoff.TO_DISPATCHER, handoff.build_to_dispatcher),
     Resource("assistant", receptionist.KEY, receptionist.NAME, receptionist.build),
+    Resource("squad", squad.KEY, squad.NAME, squad.build),
 ]
 
 
