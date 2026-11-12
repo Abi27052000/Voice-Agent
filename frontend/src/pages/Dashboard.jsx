@@ -41,7 +41,7 @@ function KpiRow({ stats }) {
       <StatTile
         label="Speed to lead"
         value={stats.speed_to_lead_seconds == null ? '—' : `${stats.speed_to_lead_seconds}s`}
-        detail={`avg over ${stats.web_leads_called} web lead${stats.web_leads_called === 1 ? '' : 's'}`}
+        detail={`form saved → call placed · ${stats.web_leads_called} web lead${stats.web_leads_called === 1 ? '' : 's'}`}
       />
       <StatTile
         label="AI cost per call"

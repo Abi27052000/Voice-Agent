@@ -411,11 +411,22 @@ footer {
   gap: 10px;
 }
 
+/* Badge | reason (wraps within its column) | timestamp */
 .attention-list li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+@media (max-width: 600px) {
+  .attention-list li {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .attention-list li > :last-child {
+    grid-column: 2;
+  }
 }
 
 .link-button {
@@ -676,4 +687,24 @@ tr.past td {
   font-size: 1.75rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Win-back ---------- */
+
+tr.row-active td {
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+@media (min-width: 761px) {
+  .sticky {
+    position: sticky;
+    top: 16px;
+  }
+}
+
+@media (max-width: 520px) {
+  .nav {
+    flex-wrap: wrap;
+    border-radius: 14px;
+  }
 }

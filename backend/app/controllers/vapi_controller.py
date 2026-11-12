@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from app.agents import dispatcher, follow_up, receptionist
+from app.agents import dispatcher, follow_up, reactivation, receptionist
 from app.core.config import get_settings
 from app.schemas.vapi import VapiPublicConfig
 from app.services.vapi_ids import load_ids
@@ -9,6 +9,7 @@ PERSONAS = {
     receptionist.NAME: receptionist.PERSONA,
     dispatcher.NAME: dispatcher.PERSONA,
     follow_up.NAME: follow_up.PERSONA,
+    reactivation.NAME: reactivation.PERSONA,
 }
 
 

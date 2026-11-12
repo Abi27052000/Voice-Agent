@@ -3,8 +3,14 @@ import { apiGet } from './lib/api'
 import Dashboard from './pages/Dashboard'
 import FrontDesk from './pages/FrontDesk'
 import QuoteRequest from './pages/QuoteRequest'
+import WinBack from './pages/WinBack'
 
-const VIEWS = { '#/': 'Front desk', '#/quote': 'Get a quote', '#/dashboard': 'Dashboard' }
+const VIEWS = {
+  '#/': 'Front desk',
+  '#/quote': 'Get a quote',
+  '#/win-back': 'Win-back',
+  '#/dashboard': 'Dashboard',
+}
 
 function currentView() {
   return VIEWS[window.location.hash] ? window.location.hash : '#/'
@@ -54,6 +60,9 @@ export default function App() {
         </div>
         <div hidden={view !== '#/quote'}>
           <QuoteRequest config={config} />
+        </div>
+        <div hidden={view !== '#/win-back'}>
+          <WinBack config={config} />
         </div>
         {view === '#/dashboard' && <Dashboard />}
       </main>

@@ -4,14 +4,8 @@ from sqlalchemy.orm import Session
 from app.agents import follow_up
 from app.schemas.quote import QuoteRequestIn, QuoteRequestOut
 from app.services.crm import upsert_lead
+from app.services.phone import last4_spoken, spoken_phone
 from app.services.vapi_ids import get_id
-
-
-def _spoken_phone(digits: str) -> str:
-    """'5550101234' -> '555 010 1234' so the voice reads it in groups."""
-    if len(digits) == 10:
-        return f"{digits[:3]} {digits[3:6]} {digits[6:]}"
-    return " ".join(digits[i : i + 3] for i in range(0, len(digits), 3))
 
 
 def create_quote_request(session: Session, body: QuoteRequestIn) -> QuoteRequestOut:
@@ -38,7 +32,10 @@ def create_quote_request(session: Session, body: QuoteRequestIn) -> QuoteRequest
         "leadId": str(lead.id),
         "fullName": body.full_name,
         "firstName": body.full_name.split()[0],
-        "phone": _spoken_phone(body.phone),
+        "phone": spoken_phone(body.phone),
+        # Reading back a full (possibly international) number is slow and sounds
+        # like dead air; confirm the last four digits instead.
+        "phoneLast4": last4_spoken(body.phone),
         "service": body.service,
         "details": body.details,
     }

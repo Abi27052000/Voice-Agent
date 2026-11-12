@@ -22,6 +22,7 @@ from app.agents import (
     dispatcher,
     follow_up,
     handoff,
+    reactivation,
     receptionist,
     squad,
     tools,
@@ -58,6 +59,7 @@ RESOURCES: list[Resource] = [
     Resource("assistant", receptionist.KEY, receptionist.NAME, receptionist.build),
     Resource("squad", squad.KEY, squad.NAME, squad.build),
     Resource("assistant", follow_up.KEY, follow_up.NAME, follow_up.build),
+    Resource("assistant", reactivation.KEY, reactivation.NAME, reactivation.build),
 ]
 
 

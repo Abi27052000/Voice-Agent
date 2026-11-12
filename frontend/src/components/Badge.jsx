@@ -36,9 +36,11 @@ export function CallOutcomeBadges({ call, now }) {
   )
 }
 
-const LEAD_TONES = { booked: 'good', emergency: 'critical', new: 'info', contacted: 'neutral' }
+// Status colors are reserved for state that needs action; outcomes stay neutral.
+const LEAD_TONES = { booked: 'good', emergency: 'critical', new: 'info', callback: 'info', do_not_call: 'warning' }
+const LEAD_LABELS = { do_not_call: 'Do not call', not_interested: 'Not interested', wrong_number: 'Wrong number' }
 
 export function LeadStatusBadge({ status }) {
-  const label = status.charAt(0).toUpperCase() + status.slice(1)
+  const label = LEAD_LABELS[status] ?? status.charAt(0).toUpperCase() + status.slice(1)
   return <Badge tone={LEAD_TONES[status] ?? 'neutral'}>{label}</Badge>
 }

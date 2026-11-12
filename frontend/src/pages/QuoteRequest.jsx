@@ -107,9 +107,10 @@ export default function QuoteRequest({ config }) {
           <div className="speed-banner" role="status">
             <span className="speed-value">{speedSeconds.toFixed(1)}s</span>
             <span>
-              from form submit to Sam calling back
+              from clicking submit to talking with Sam
               <span className="muted small block">
-                Demo: the call rings in your browser. In production it dials the lead's phone.
+                Includes your mic permission and browser audio setup. In production Sam dials the lead's phone
+                instead; the dashboard tracks that form-to-call time.
               </span>
             </span>
           </div>

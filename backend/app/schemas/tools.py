@@ -47,6 +47,14 @@ class BookAppointmentArgs(CallerDetails):
     address: str = Field(min_length=5, max_length=255, description="Service street address and town.")
 
 
+class UpdateLeadStatusArgs(ToolArgs):
+    # The lead is identified server-side from the call's variables, never by the model.
+    outcome: Literal["callback_requested", "not_interested", "do_not_call", "wrong_number"] = Field(
+        description="callback_requested: wants a call at another time. not_interested: declined "
+        "the offer. do_not_call: asked not to be called again. wrong_number: not this customer."
+    )
+
+
 class CreateLeadArgs(CallerDetails):
     address: str | None = Field(
         default=None, max_length=255, description="Service street address and town, if given."

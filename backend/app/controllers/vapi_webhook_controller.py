@@ -45,7 +45,12 @@ def _format_validation_error(exc: ValidationError) -> str:
     return "Invalid or missing details - " + "; ".join(problems) + ". Ask the caller and retry."
 
 
-def run_tool_call(session: Session, tool_call: dict[str, Any], call_id: str | None) -> dict[str, Any]:
+def run_tool_call(
+    session: Session,
+    tool_call: dict[str, Any],
+    call_id: str | None,
+    variables: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     tool_call_id = str(tool_call.get("id", ""))
     function = tool_call.get("function") or {}
     name = function.get("name") or tool_call.get("name") or ""
@@ -68,7 +73,7 @@ def run_tool_call(session: Session, tool_call: dict[str, Any], call_id: str | No
         return result
 
     try:
-        ctx = ToolContext(tool_call_id=tool_call_id, call_id=call_id)
+        ctx = ToolContext(tool_call_id=tool_call_id, call_id=call_id, variables=variables or {})
         result["result"] = handler(session, args, ctx)
     except ToolError as exc:
         session.rollback()
@@ -82,6 +87,12 @@ def run_tool_call(session: Session, tool_call: dict[str, Any], call_id: str | No
     return result
 
 
+def call_variables(call: dict[str, Any]) -> dict[str, Any]:
+    """variableValues the call was started with (browser start, campaign row, or API)."""
+    overrides = call.get("assistantOverrides") or {}
+    return overrides.get("variableValues") or {}
+
+
 def handle_server_message(
     session: Session, body: dict[str, Any], background: BackgroundTasks
 ) -> dict[str, Any]:
@@ -91,7 +102,8 @@ def handle_server_message(
 
     if message_type == "tool-calls":
         tool_calls = message.get("toolCallList") or []
-        return {"results": [run_tool_call(session, tc, call_id) for tc in tool_calls]}
+        variables = call_variables(message.get("call") or {})
+        return {"results": [run_tool_call(session, tc, call_id, variables) for tc in tool_calls]}
 
     if message_type == "end-of-call-report" and call_id:
         call = record_end_of_call_report(session, message)

@@ -81,7 +81,8 @@ def _find_lead_id(session: Session, call_id: str, data: dict[str, Any]) -> int |
     # Outbound follow-ups pass the CRM lead ID as a call variable.
     variables = ((data.get("assistantOverrides") or {}).get("variableValues")
                  or (data.get("artifact") or {}).get("variableValues") or {})
-    raw = str(variables.get("leadId", ""))
+    # Quote follow-ups use camelCase (leadId); campaign-style calls use snake_case (lead_id).
+    raw = str(variables.get("leadId") or variables.get("lead_id") or "")
     if raw.isdigit() and session.get(Lead, int(raw)):
         return int(raw)
     return None
@@ -110,9 +111,11 @@ def upsert_call(session: Session, data: dict[str, Any]) -> Call:
         call.lead_id = _find_lead_id(session, call.id, data)
 
     lead = session.get(Lead, call.lead_id) if call.lead_id else None
-    # A web-form lead we called back is "contacted" (booking/emergency set their own status).
-    # Inbound callback requests stay "new": nobody has called them back yet.
-    if lead and lead.source == "web_form" and lead.status == "new" and call.ended_reason:
+    # An outbound lead we called (web form follow-up or win-back) becomes "contacted"
+    # unless a tool already recorded a more specific outcome. Inbound callback
+    # requests stay "new": nobody has called them back yet.
+    if (lead and call.ended_reason
+            and (lead.source, lead.status) in {("web_form", "new"), ("old_list", "dormant")}):
         lead.status = "contacted"
 
     result = extract_outcome(artifact)

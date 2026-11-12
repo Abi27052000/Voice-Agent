@@ -35,6 +35,7 @@ def test_quote_request_creates_web_lead_and_call_variables(quote_client):
     assert body["assistant_id"] == "asst-follow"
     values = body["variable_values"]
     assert values["firstName"] == "Maria" and values["phone"] == "555 010 1234"
+    assert values["phoneLast4"] == "1 2 3 4"
     assert values["leadId"] == str(body["lead_id"]) and values["service"] == "Water heater"
     with SessionLocal() as s:
         lead = s.get(Lead, body["lead_id"])

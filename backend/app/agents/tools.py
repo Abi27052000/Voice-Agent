@@ -5,11 +5,17 @@ from typing import Any
 from pydantic import BaseModel
 
 from app.agents.common import webhook_url
-from app.schemas.tools import BookAppointmentArgs, CheckAvailabilityArgs, CreateLeadArgs
+from app.schemas.tools import (
+    BookAppointmentArgs,
+    CheckAvailabilityArgs,
+    CreateLeadArgs,
+    UpdateLeadStatusArgs,
+)
 
 CHECK_AVAILABILITY = "check_availability"
 BOOK_APPOINTMENT = "book_appointment"
 CREATE_LEAD = "create_lead"
+UPDATE_LEAD_STATUS = "update_lead_status"
 
 
 def function_parameters(model: type[BaseModel]) -> dict[str, Any]:
@@ -89,8 +95,21 @@ def build_create_lead(ids: dict[str, dict[str, str]]) -> dict[str, Any]:
     )
 
 
+def build_update_lead_status(ids: dict[str, dict[str, str]]) -> dict[str, Any]:
+    return _function_tool(
+        UPDATE_LEAD_STATUS,
+        "Record the outcome of a win-back call with an existing customer when they did not "
+        "book: wants a callback later, not interested, asked not to be called, or wrong number. "
+        "Do not call after a successful booking.",
+        UpdateLeadStatusArgs,
+        None,
+        ids["credential"]["webhook"],
+    )
+
+
 TOOLS = [
     (CHECK_AVAILABILITY, build_check_availability),
     (BOOK_APPOINTMENT, build_book_appointment),
     (CREATE_LEAD, build_create_lead),
+    (UPDATE_LEAD_STATUS, build_update_lead_status),
 ]

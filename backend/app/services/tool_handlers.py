@@ -5,15 +5,21 @@ read, and raises ToolError with a message that tells the model how to recover.
 """
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
+from typing import Any
 
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models import Appointment
-from app.schemas.tools import BookAppointmentArgs, CheckAvailabilityArgs, CreateLeadArgs
+from app.db.models import Appointment, Lead
+from app.schemas.tools import (
+    BookAppointmentArgs,
+    CheckAvailabilityArgs,
+    CreateLeadArgs,
+    UpdateLeadStatusArgs,
+)
 from app.services import scheduling
 from app.services.crm import upsert_lead
 
@@ -26,6 +32,8 @@ class ToolError(Exception):
 class ToolContext:
     tool_call_id: str
     call_id: str | None
+    # The call's variableValues (set when the call was started, not by the model).
+    variables: dict[str, Any] = field(default_factory=dict)
 
 
 def _spoken_reference(appointment: Appointment) -> str:
@@ -118,6 +126,29 @@ def create_lead(session: Session, args: CreateLeadArgs, ctx: ToolContext) -> str
     return "Request logged. The office will follow up during business hours."
 
 
+LEAD_STATUS_FOR_OUTCOME = {
+    "callback_requested": "callback",
+    "not_interested": "not_interested",
+    "do_not_call": "do_not_call",
+    "wrong_number": "wrong_number",
+}
+
+
+def update_lead_status(session: Session, args: UpdateLeadStatusArgs, ctx: ToolContext) -> str:
+    # Trust boundary: the lead comes from the call's variables (set by our backend
+    # when the call was started), so the model can't touch a different customer.
+    raw = str(ctx.variables.get("lead_id", ""))
+    lead = session.get(Lead, int(raw)) if raw.isdigit() else None
+    if lead is None:
+        raise ToolError("This call isn't linked to a customer record. Don't retry; continue the call.")
+    lead.status = LEAD_STATUS_FOR_OUTCOME[args.outcome]
+    lead.call_id = ctx.call_id or lead.call_id
+    session.commit()
+    if args.outcome == "do_not_call":
+        return "Saved. They are on the do-not-call list. Confirm they won't be called again, then end the call."
+    return "Saved."
+
+
 Handler = Callable[[Session, BaseModel, ToolContext], str]
 
 # Allowlist: function name -> (argument model, handler)
@@ -125,4 +156,5 @@ TOOL_HANDLERS: dict[str, tuple[type[BaseModel], Handler]] = {
     "check_availability": (CheckAvailabilityArgs, check_availability),
     "book_appointment": (BookAppointmentArgs, book_appointment),
     "create_lead": (CreateLeadArgs, create_lead),
+    "update_lead_status": (UpdateLeadStatusArgs, update_lead_status),
 }
